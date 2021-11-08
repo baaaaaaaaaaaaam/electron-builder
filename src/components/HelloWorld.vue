@@ -1,40 +1,72 @@
 <template>
   <div class="hello">
-    <h1>{{ msg }}</h1>
-    <p>
-      For a guide and recipes on how to configure / customize this project,<br>
-      check out the
-      <a href="https://cli.vuejs.org" target="_blank" rel="noopener">vue-cli documentation</a>.
-    </p>
-    <h3>Installed CLI Plugins</h3>
-    <ul>
-      <li><a href="https://github.com/vuejs/vue-cli/tree/dev/packages/%40vue/cli-plugin-babel" target="_blank" rel="noopener">babel</a></li>
-      <li><a href="https://github.com/vuejs/vue-cli/tree/dev/packages/%40vue/cli-plugin-eslint" target="_blank" rel="noopener">eslint</a></li>
-    </ul>
-    <h3>Essential Links</h3>
-    <ul>
-      <li><a href="https://vuejs.org" target="_blank" rel="noopener">Core Docs</a></li>
-      <li><a href="https://forum.vuejs.org" target="_blank" rel="noopener">Forum</a></li>
-      <li><a href="https://chat.vuejs.org" target="_blank" rel="noopener">Community Chat</a></li>
-      <li><a href="https://twitter.com/vuejs" target="_blank" rel="noopener">Twitter</a></li>
-      <li><a href="https://news.vuejs.org" target="_blank" rel="noopener">News</a></li>
-    </ul>
-    <h3>Ecosystem</h3>
-    <ul>
-      <li><a href="https://router.vuejs.org" target="_blank" rel="noopener">vue-router</a></li>
-      <li><a href="https://vuex.vuejs.org" target="_blank" rel="noopener">vuex</a></li>
-      <li><a href="https://github.com/vuejs/vue-devtools#vue-devtools" target="_blank" rel="noopener">vue-devtools</a></li>
-      <li><a href="https://vue-loader.vuejs.org" target="_blank" rel="noopener">vue-loader</a></li>
-      <li><a href="https://github.com/vuejs/awesome-vue" target="_blank" rel="noopener">awesome-vue</a></li>
-    </ul>
+    <h1>{{version}}</h1>
+    <h2>{{status}}</h2>
+    <div class="hidden" id="notification">
+      <div class="noti-modal">
+        <p id="message">{{message}}</p>
+        <button @click="restart()"> 재시작 </button>
+      </div>
+    </div>
   </div>
 </template>
 
 <script>
+import { ipcRenderer } from 'electron'
+  
+
+
 export default {
   name: 'HelloWorld',
-  props: {
-    msg: String
+  data(){
+    return{
+      version:''
+      ,status:''
+      ,message:'업그레이드 버전이 있습니다. 프로그램을 재시작 하겠습니다.'
+    }
+  }
+  ,mounted(){
+    this.defaultSetting();
+  }
+  ,methods:{
+    defaultSetting(){
+      // 앱 시작하면서 버전을 체크하여 background.js 의 ipcMain.on('app_version')을 호출함
+      ipcRenderer.send('app_version')
+      ipcRenderer.on('app_version',(event,arg)=>{
+        console.log('Version ' + arg.version);
+        this.version = arg.version
+        ipcRenderer.removeAllListeners('app_version');
+      })
+      ipcRenderer.on('checking-for-update',()=>{
+        console.log('checking-for-update')
+        this.status = 'checking-for-update'
+        ipcRenderer.removeAllListeners('checking-for-update');
+      })
+
+      ipcRenderer.on('update-available',()=>{
+        console.log('update-available')
+        this.status = 'update-available'
+        ipcRenderer.removeAllListeners('update-available');
+      })
+
+      ipcRenderer.on('update-not-available',()=>{
+        console.log('update-not-available')
+        this.status = 'update-not-available'
+        ipcRenderer.removeAllListeners('update-not-available');
+      })
+
+
+      ipcRenderer.on('update-downloaded',()=>{
+        console.log('update-downloaded')
+        this.status = 'update-downloaded'
+        document.getElementById('notification').classList.remove('hidden')
+        ipcRenderer.removeAllListeners('update-downloaded');
+      })
+    },
+    restart(){
+      // 재시작 버튼을 누를경우 background.js 의  ipcMain.on('restart_app')을 호출함  
+      ipcRenderer.send('restart_app')
+    }
   }
 }
 </script>
@@ -54,5 +86,40 @@ li {
 }
 a {
   color: #42b983;
+}
+
+.hidden {
+  display: none;
+}
+#notification {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(130, 130, 130,0.7); 
+
+  z-index: 9999;
+}
+
+.noti-modal {
+position: fixed;
+background-color: rgba(255,255,255,1); 
+
+
+width: 400px;
+height: 100px;
+padding: 20px;
+
+top: 50%;
+left: 50%;
+-webkit-transform: translate(-50%, -50%);
+-moz-transform: translate(-50%, -50%);
+-ms-transform: translate(-50%, -50%);
+-o-transform: translate(-50%, -50%);
+transform: translate(-50%, -50%);
+border-radius: 5px;
+box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
+
 }
 </style>

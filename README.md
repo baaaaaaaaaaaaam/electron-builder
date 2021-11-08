@@ -1,5 +1,13 @@
 # electron-builder
 
+## project create
+
+```
+vue create electron-builer
+vue add electron-builder
+npm install  electron-log electron-updater
+```
+
 ## Project setup
 ```
 npm install
