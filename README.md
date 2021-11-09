@@ -1,5 +1,10 @@
 # electron-builder
 
+이 레포지터리에 관련되어 제가 작성한 글입니다 . 
+참고하시면됩니다.
+https://programmerk.tistory.com/55
+https://programmerk.tistory.com/56
+
 ## project create
 
 ```
