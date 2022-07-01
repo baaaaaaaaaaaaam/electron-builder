@@ -4,11 +4,12 @@ import { app, protocol, BrowserWindow, ipcMain } from 'electron'
 import { createProtocol } from 'vue-cli-plugin-electron-builder/lib'
 import installExtension, { VUEJS3_DEVTOOLS } from 'electron-devtools-installer'
 const isDevelopment = process.env.NODE_ENV !== 'production'
-
+const log = require('electron-log');
 //update 추가
 import { autoUpdater } from "electron-updater"
 
 let win;
+let mode = process.env.VUE_APP_MODE; // 실행 모드
 
 // Scheme must be registered before the app is ready
 protocol.registerSchemesAsPrivileged([
@@ -58,6 +59,16 @@ app.on('activate', () => {
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
+
+
+autoUpdater.setFeedURL({
+  provider: "github",
+  repo: "electron-builder",
+  owner: "baaaaaaaaaaaaam",
+  private: true,
+  token: "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",
+});
+
 app.on('ready', async () => {
   if (isDevelopment && !process.env.IS_TEST) {
     // Install Vue Devtools
@@ -68,7 +79,16 @@ app.on('ready', async () => {
     }
   }
   createWindow()
-  let a = autoUpdater.checkForUpdates() 
+  
+  log.info('app.on ready');
+  let result = await autoUpdater.getUpdateInfoAndProvider();
+  let releasesVersion = result.info.version;
+  log.info(releasesVersion);
+  log.info(releasesVersion.split('-')[1]);
+  if(releasesVersion.split('-')[1]===mode){
+    log.info(mode);
+    autoUpdater.checkForUpdates()
+  }
 })
 
 // Exit cleanly on request from parent process in development mode.
@@ -88,42 +108,48 @@ if (isDevelopment) {
 
 // HelloWorld.vue 안의 ipcRender.send 를 통해 호출되면 app_version을 확인한 후 HelloWorld.vue 로 보냄 
 ipcMain.on('app_version',(event)=>{
+  log.info('app_version');
+
   event.sender.send('app_version',{
     version:app.getVersion()
   })
 })
 // HelloWorld.vue 안의 ipcRender.send 를 통해 호출되면 앱을 종료하고 install을 시작함
 ipcMain.on('restart_app',()=>{
+  log.info('restart_app');
   autoUpdater.quitAndInstall();
 })
 
 
 // 업데이트 오류시
 autoUpdater.on('error', function(error) {
+  log.info('restart_app',error);
   win.webContents.send('error')
-  console.error('error', error);
 });
 
 // 업데이트 체크
 autoUpdater.on('checking-for-update',  () => {
+  log.info('checking-for-update');
   win.webContents.send('checking-for-update')
-  console.log('checking-for-update');
+
 });
 
 // 업데이트할 내용이 있을 때
 autoUpdater.on('update-available',  () => {
+  log.info('A new update is available');
   win.webContents.send('update-available')
-  console.log('A new update is available');
+
 });
 
 // 업데이트할 내용이 없을 때
 autoUpdater.on('update-not-available',  () => {
+  log.info('update-not-available');
   win.webContents.send('update-not-available')
-  console.log('update-not-available');
+
 });
 
 //다운로드 완료되면 업데이트
 autoUpdater.on('update-downloaded',  () => {
-  console.log('update-downloaded');
+  log.info('update-downloaded');
   win.webContents.send('update-downloaded')
 });

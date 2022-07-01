@@ -6,7 +6,9 @@
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build",
     "lint": "vue-cli-service lint",
-    "electron:build": "vue-cli-service electron:build",
+    "electron:build-dev": "vue-cli-service electron:build --mode dev",
+    "electron:build-master": "vue-cli-service electron:build --mode master",
+    "electron:build-product": "vue-cli-service electron:build --mode product",
     "electron:serve": "vue-cli-service electron:serve",
     "postinstall": "electron-builder install-app-deps",
     "postuninstall": "electron-builder install-app-deps"
